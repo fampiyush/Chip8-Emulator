@@ -1,0 +1,11 @@
+# vcpkg installed dependencies
+/vcpkg_installed/
+
+# CMake build files
+/build/
+/out/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
