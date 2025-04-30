@@ -2,6 +2,8 @@
 #include <SDL3/SDL.h>
 #include "Chip8.h"
 
+Chip8 chip8; // Create an instance of the Chip8 class
+
 int main(int argc, char** argv) {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -25,6 +27,9 @@ int main(int argc, char** argv) {
         SDL_Quit();
         return -1;
     }
+
+    // Load a ROM file into the Chip-8 emulator
+    chip8.loadRom("Roms/Pong.ch8");
 
     bool quit = false;
     SDL_Event event;

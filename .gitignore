@@ -9,3 +9,8 @@ CMakeFiles/
 cmake_install.cmake
 CTestTestfile.cmake
 Makefile
+
+/Roms
+
+# Visual Studio Code settings
+.vscode
