@@ -1,5 +1,4 @@
-#include <cstdint>
-#include <fstream>
+#pragma once
 
 class Chip8 {
     private:
@@ -21,56 +20,3 @@ class Chip8 {
         void loadRom(const char* filename); // Load a ROM into memory
         void emulateCycle(); // Emulate one cycle of the Chip-8 CPU
 };
-
-void Chip8::initialize() {
-    // Initialize memory, registers, stack, etc.
-    PC = 0x200; // Program starts at 0x200
-    I = 0;
-    SP = 0;
-    delay_timer = 0;
-    sound_timer = 0;
-    draw_flag = false;
-
-    // Load fontset into memory
-    for (int i = 0; i < 80; ++i) {
-        memory[i] = fontset[i];
-    }
-
-    // Clear display
-    for (int i = 0; i < 64 * 32; ++i) {
-        display[i] = 0;
-    }
-}
-
-void Chip8::loadRom(const char* filename) {
-    // Load a ROM file into memory starting at 0x200
-    std::ifstream rom(filename, std::ios::binary);
-    if (!rom) {
-        // Handle error
-        std::cerr << "Failed to open ROM file: " << filename << std::endl;
-        return;
-    }
-
-    rom.read(reinterpret_cast<char*>(&memory[0x200]), 4096 - 0x200); // Load ROM into memory
-}
-
-void Chip8::emulateCycle() {
-    // Fetch, decode, and execute the opcode
-    uint16_t opcode = (memory[PC] << 8) | memory[PC + 1]; // Fetch opcode
-    PC += 2; // Move to the next opcode
-
-    // Decode and execute the opcode (this is just a placeholder)
-    switch (opcode & 0xF000) {
-        case 0x0000:
-            // Handle 0x00E0 (clear screen) and other opcodes
-            break;
-        case 0x1000:
-            // Handle jump instruction
-            break;
-        // Add more cases for other opcodes
-        default:
-            // Unknown opcode
-            std::cerr << "Unknown opcode: " << std::hex << opcode << std::endl;
-            break;
-    }
-}
