@@ -35,6 +35,18 @@ void Chip8::loadRom(const char* filename) {
     rom.read(reinterpret_cast<char*>(&memory[0x200]), 4096 - 0x200); // Load ROM into memory
 }
 
+void Chip8::setKey(int key, bool state) {
+    // Set the state of a key (pressed or not pressed)
+    if (key >= 0 && key < 16) {
+        keys[key] = state;
+    }
+}
+
+uint8_t Chip8::getPixel(int x, int y) {
+    // Get the pixel value at (x, y)
+    return display[x + (y * 64)];
+}
+
 void Chip8::emulateCycle() {
     // Fetch, decode, and execute the opcode
     uint16_t opcode = (memory[PC] << 8) | memory[PC + 1]; // Fetch opcode
@@ -172,11 +184,12 @@ void Chip8::emulateCycle() {
             break;
         case 0xD000:
             // Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels
-            uint8_t xCoord = V[(opcode & 0x0f00) >> 8];
-            uint8_t yCoord = V[(opcode & 0x00f0) >> 4];
-            uint8_t height = (opcode & 0x000f);
+            {
+                uint8_t xCoord = V[(opcode & 0x0f00) >> 8];
+                uint8_t yCoord = V[(opcode & 0x00f0) >> 4];
+                uint8_t height = (opcode & 0x000f);
 
-            V[0xF] = 0; // Reset collision flag
+                V[0xF] = 0; // Reset collision flag
 
             for(int y=0; y<height; y++) {
                 if(I + y >= 4096) {
@@ -194,8 +207,8 @@ void Chip8::emulateCycle() {
                     }
                 }
             }
-
-            draw_flag = true;
+                draw_flag = true;
+            }
             break;
         case 0xE000:
             if((opcode & 0x000F) == 0x0001) {
@@ -219,18 +232,20 @@ void Chip8::emulateCycle() {
                     V[(opcode & 0x0f00) >> 8] = delay_timer;
                     break;
                 case 0x000A:
-                    // Wait for a key press and store the value in Vx
-                    // This is a blocking call, so it will wait until a key is pressed
-                    bool key_pressed = false;
-                    for(int i = 0; i < 16; ++i) {
-                        if(keys[i]) {
-                            V[(opcode & 0x0f00) >> 8] = i;
-                            key_pressed = true;
-                            break;
+                    {
+                        // Wait for a key press and store the value in Vx
+                        // This is a blocking call, so it will wait until a key is pressed
+                        bool key_pressed = false;
+                        for(int i = 0; i < 16; ++i) {
+                            if(keys[i]) {
+                                V[(opcode & 0x0f00) >> 8] = i;
+                                key_pressed = true;
+                                break;
+                            }
                         }
-                    }
-                    if(!key_pressed) {
-                        PC -= 2; // Skip this instruction if no key was pressed
+                        if(!key_pressed) {
+                            PC -= 2; // Skip this instruction if no key was pressed
+                        }
                     }
                     break;
                 case 0x0015:

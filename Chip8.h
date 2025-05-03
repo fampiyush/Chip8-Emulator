@@ -12,7 +12,6 @@ class Chip8 {
         uint8_t SP; // Stack pointer
         uint8_t display[64 * 32]; // 64x32 pixel display
         bool keys[16]; // Keypad state (0x0 to 0xF)
-        bool draw_flag; // Flag to indicate if the display needs to be updated
         uint8_t fontset[80] =  // Fontset for the Chip-8
         {
             0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -32,9 +31,13 @@ class Chip8 {
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
             0xF0, 0x80, 0xF0, 0x80, 0x80  // F
         };
+        
+        public:
+        bool draw_flag; // Flag to indicate if the display needs to be updated
 
-    public:
         void initialize(); // Initialize the Chip-8 system
         void loadRom(const char* filename); // Load a ROM into memory
         void emulateCycle(); // Emulate one cycle of the Chip-8 CPU
+        void setKey(int key, bool state); // Set the state of a key
+        uint8_t getPixel(int x, int y); // Get the pixel value at (x, y)
 };
