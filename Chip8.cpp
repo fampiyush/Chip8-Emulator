@@ -40,7 +40,7 @@ void Chip8::emulateCycle() {
     uint16_t opcode = (memory[PC] << 8) | memory[PC + 1]; // Fetch opcode
     PC += 2; // Move to the next opcode
 
-    // Decode and execute the opcode (this is just a placeholder)
+    // Decode and execute the opcode
     switch(opcode & 0xF000) {
         case 0x0000:
             // Handle 0x00E0 (clear screen) and 0x00EE (return from subroutine)
@@ -67,9 +67,14 @@ void Chip8::emulateCycle() {
             PC = opcode & 0x0FFF; // Jump to address NNN
             break;
         case 0x3000:
-        case 0x4000:
-            // Handle skip if equal/skip if not equal instruction
+            // Handle skip if equal instruction
             if(V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF)) {
+                PC += 2; // Skip next instruction
+            }
+            break;
+        case 0x4000:
+            // Handle skip if not equal instruction
+            if(V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)) {
                 PC += 2; // Skip next instruction
             }
             break;
@@ -142,7 +147,133 @@ void Chip8::emulateCycle() {
                     V[0xF] = (V[(opcode & 0x0f00) >> 8] & 0x80) >> 7;
                     V[(opcode & 0x0f00) >> 8] <<= 1;
                     break;
+                default:
+                    std::cerr << "Unknown 0x8000 opcode: " << std::hex << opcode << std::endl;
+                    break;
             }
+            break;
+        case 0x9000:
+            // Handle skip if registers are not equal instruction
+            if(V[(opcode & 0x0f00) >> 8] != V[(opcode & 0x00f0) >> 4]) {
+                PC += 2;
+            }
+            break;
+        case 0xA000:
+            // Handle load address into index register instruction
+            I = (opcode & 0x0fff);
+            break;
+        case 0xB000:
+            // Handle jump to address plus V0 instruction
+            PC = V[0x0] + (opcode & 0x0fff);
+            break;
+        case 0xC000:
+            // Handle random number instruction
+            V[(opcode & 0x0f00) >> 8] = (rand() % 256) & (opcode & 0x00ff); // Random number ANDed with NN
+            break;
+        case 0xD000:
+            // Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels
+            uint8_t xCoord = V[(opcode & 0x0f00) >> 8];
+            uint8_t yCoord = V[(opcode & 0x00f0) >> 4];
+            uint8_t height = (opcode & 0x000f);
+
+            V[0xF] = 0; // Reset collision flag
+
+            for(int y=0; y<height; y++) {
+                if(I + y >= 4096) {
+                    std::cerr << "Sprite data out of bounds" << std::endl;
+                    break;
+                }
+                uint8_t pixels = memory[I+y];
+                for(int x=0; x<8; x++) {
+                    if((pixels & (0x80 >> x)) != 0) {
+                        int index = ((xCoord + x) % 64) + ((yCoord + y) % 32) * 64;
+                        if(display[index] == 1) {
+                            V[0xF] = 1; // Collision detected
+                        }
+                        display[index] ^= 1; // XOR to flip pixel
+                    }
+                }
+            }
+
+            draw_flag = true;
+            break;
+        case 0xE000:
+            if((opcode & 0x000F) == 0x0001) {
+                // Skip next instruction if key with value of Vx is pressed
+                if(keys[V[(opcode & 0x0f00) >> 8]]) {
+                    PC += 2;
+                }
+            } else if((opcode & 0x000F) == 0x000E) {
+                // Skip next instruction if key with value of Vx is not pressed
+                if(!keys[V[(opcode & 0x0f00) >> 8]]) {
+                    PC += 2;
+                }
+            } else {
+                std::cerr << "Unknown E000 opcode: " << std::hex << opcode << std::endl;
+            }
+            break;
+        case 0xF000:
+            switch(opcode & 0x00FF) {
+                case 0x0007:
+                    // Load delay timer value into Vx
+                    V[(opcode & 0x0f00) >> 8] = delay_timer;
+                    break;
+                case 0x000A:
+                    // Wait for a key press and store the value in Vx
+                    // This is a blocking call, so it will wait until a key is pressed
+                    bool key_pressed = false;
+                    for(int i = 0; i < 16; ++i) {
+                        if(keys[i]) {
+                            V[(opcode & 0x0f00) >> 8] = i;
+                            key_pressed = true;
+                            break;
+                        }
+                    }
+                    if(!key_pressed) {
+                        PC -= 2; // Skip this instruction if no key was pressed
+                    }
+                    break;
+                case 0x0015:
+                    // Set delay timer to Vx
+                    delay_timer = V[(opcode & 0x0f00) >> 8];
+                    break;
+                case 0x0018:
+                    // Set sound timer to Vx
+                    sound_timer = V[(opcode & 0x0f00) >> 8];
+                    break;
+                case 0x001E:
+                    // Add Vx to I
+                    I += V[(opcode & 0x0f00) >> 8];
+                    break;
+                case 0x0029:
+                    // Set I to the location of the sprite for the character in Vx
+                    I = V[(opcode & 0x0f00) >> 8] * 5; // Each character is 5 bytes
+                    break;
+                case 0x0033:
+                    // Store BCD representation of Vx in memory locations I, I+1, and I+2
+                    memory[I]     = V[(opcode & 0x0f00) >> 8] / 100;
+                    memory[I + 1] = (V[(opcode & 0x0f00) >> 8] / 10) % 10;
+                    memory[I + 2] = V[(opcode & 0x0f00) >> 8] % 10;
+                    break;
+                case 0x0055:
+                    // Store registers V0 to Vx in memory starting
+                    for(int i = 0; i <= ((opcode & 0x0f00) >> 8); ++i) {
+                        memory[I + i] = V[i];
+                    }
+                    I += ((opcode & 0x0f00) >> 8) + 1; // Increment I after storing
+                    break;
+                case 0x0065:
+                    // Fill registers V0 to Vx with values from memory starting at I
+                    for(int i = 0; i <= ((opcode & 0x0f00) >> 8); ++i) {
+                        V[i] = memory[I + i];
+                    }
+                    I += ((opcode & 0x0f00) >> 8) + 1; // Increment I after loading
+                    break;
+                default:
+                    std::cerr << "Unknown F000 opcode: " << std::hex << opcode << std::endl;
+                    break;
+            }
+            break;
         default:
             // Unknown opcode
             std::cerr << "Unknown opcode: " << std::hex << opcode << std::endl;
