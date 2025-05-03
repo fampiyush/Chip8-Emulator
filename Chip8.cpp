@@ -279,4 +279,16 @@ void Chip8::emulateCycle() {
             std::cerr << "Unknown opcode: " << std::hex << opcode << std::endl;
             break;
     }
+
+    // Update timers
+    if(delay_timer > 0) {
+        --delay_timer;
+    }
+    if(sound_timer > 0) {
+        if(sound_timer == 1) {
+            // Beep sound
+            std::cout << "Beep!" << std::endl;
+        }
+        --sound_timer;
+    }
 }
