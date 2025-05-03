@@ -1,4 +1,4 @@
-A chip8 emulator built in c++ using sdl3.
+A [chip8](https://en.wikipedia.org/wiki/CHIP-8) emulator built in c++ using sdl3.
 
 ## Getting Started
 
