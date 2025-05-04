@@ -192,10 +192,6 @@ void Chip8::emulateCycle() {
                 V[0xF] = 0; // Reset collision flag
 
             for(int y=0; y<height; y++) {
-                if(I + y >= 4096) {
-                    std::cerr << "Sprite data out of bounds" << std::endl;
-                    break;
-                }
                 uint8_t pixels = memory[I+y];
                 for(int x=0; x<8; x++) {
                     if((pixels & (0x80 >> x)) != 0) {
