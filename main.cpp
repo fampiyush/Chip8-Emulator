@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     chip8.initialize(); // Initialize the Chip-8 emulator
 
     // Load a ROM file into the Chip-8 emulator
-    chip8.loadRom("Roms/Pong2.ch8");
+    chip8.loadRom("../../../Pong2.ch8");
 
     bool quit = false;
     SDL_Event event;

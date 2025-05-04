@@ -297,8 +297,7 @@ void Chip8::emulateCycle() {
     }
     if(sound_timer > 0) {
         if(sound_timer == 1) {
-            // Beep sound
-            std::cout << "Beep!" << std::endl;
+            // Beep sound here
         }
         --sound_timer;
     }
